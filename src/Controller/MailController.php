@@ -82,7 +82,6 @@ class MailController
                 'message' => 'Mail sent successfully.'
             ]);
         } else {
-            // Log the email sending error
             $this->logError('Error sending email', $request, $httpCode, $error, $response);
             return $this->jsonResponse([
                 'status' => 'error',
@@ -94,7 +93,6 @@ class MailController
         }
     }
 
-    // Log errors to database
     private function logError(string $message, Request $request, int $httpCode = null, string $error = null, string $response = null)
     {
         $log = new ProxyLogs();
