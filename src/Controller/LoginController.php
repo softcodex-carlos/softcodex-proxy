@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
-use SoftcodexProxy\Config;
-use SoftcodexProxy\OidcProxy;
+use App\Config;
+use App\OidcProxy;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;

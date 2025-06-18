@@ -1,5 +1,5 @@
 <?php
-namespace SoftcodexProxy;
+namespace App;
 
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
