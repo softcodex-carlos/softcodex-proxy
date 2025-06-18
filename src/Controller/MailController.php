@@ -17,7 +17,7 @@ class MailController
         $this->entityManager = $entityManager;
     }
 
-    #[Route('/mail-send', name: 'send_email', methods: ['POST'])]
+    #[Route('/mail/send', name: 'send_email', methods: ['POST'])]
     public function sendEmail(Request $request): Response
     {
         try {
