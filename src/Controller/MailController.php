@@ -71,18 +71,40 @@ class MailController extends AbstractController
                 "Content-Type: application/json"
             ]
         ]);
+
+        $start = microtime(true);
         $response = curl_exec($ch);
+        $end = microtime(true);
+
+        $durationMs = ($end - $start) * 1000;
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 300) {
+            $this->logRequest(
+                'Mail sent successfully.',
+                $request,
+                $httpCode,
+                null,
+                $response,
+                $durationMs
+            );
+
             return $this->jsonResponse([
                 'status' => 'success',
                 'message' => 'Mail sent successfully.'
             ]);
         } else {
-            $this->logError('Error sending email', $request, $httpCode, $error, $response);
+            $this->logRequest(
+                'Error sending email: ' . ($error ?: 'Unknown error'),
+                $request,
+                $httpCode,
+                $error,
+                $response,
+                $durationMs
+            );
+
             return $this->jsonResponse([
                 'status' => 'error',
                 'message' => 'Error sending email',
@@ -93,7 +115,7 @@ class MailController extends AbstractController
         }
     }
 
-    private function logError(string $message, Request $request, int $httpCode = null, string $error = null, string $response = null)
+    private function logRequest(string $message, Request $request, ?int $httpCode = null, ?string $error = null, ?string $response = null, float $responseTimeMs = 0): void
     {
         $log = new ProxyLogs();
         $log->setTimestamp(new \DateTime());
@@ -101,10 +123,10 @@ class MailController extends AbstractController
         $log->setMethod($request->getMethod());
         $log->setUrl($request->getRequestUri());
         $log->setStatusCode($httpCode ?? 400);
-        $log->setResponseTime(0);
-        $log->setResponseSize(strlen($response ?? ''));
+        $log->setResponseTime($responseTimeMs);
+        $log->setResponseSize(mb_strlen($response ?? '', '8bit'));
         $log->setUserAgent($request->headers->get('User-Agent'));
-        $log->setReferer($request->headers->get('Referer'));
+        $log->setReferer($request->headers->get('Referer') ?? 'No referer');
         $log->setErrorMessage($message);
 
         $this->entityManager->persist($log);
