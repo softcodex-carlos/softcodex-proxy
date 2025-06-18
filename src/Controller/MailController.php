@@ -30,11 +30,9 @@ class MailController
             ], 400);
         }
 
-        // Check if required fields are present
         $required = ['subject', 'html', 'from', 'to', 'accessToken'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                // Log the missing field error
                 $this->logError("Required field is missing: $field", $request);
                 return $this->jsonResponse([
                     'status' => 'error',
@@ -43,7 +41,6 @@ class MailController
             }
         }
 
-        // Send the email (dummy payload for example)
         $emailPayload = [
             "message" => [
                 "subject" => $data['subject'],
@@ -105,8 +102,8 @@ class MailController
         $log->setClientIp($request->getClientIp());
         $log->setMethod($request->getMethod());
         $log->setUrl($request->getRequestUri());
-        $log->setStatusCode($httpCode ?? 400);  // Default to 400 for validation errors
-        $log->setResponseTime(0);  // You can improve this later if needed
+        $log->setStatusCode($httpCode ?? 400);
+        $log->setResponseTime(0);
         $log->setResponseSize(strlen($response ?? ''));
         $log->setUserAgent($request->headers->get('User-Agent'));
         $log->setReferer($request->headers->get('Referer'));
