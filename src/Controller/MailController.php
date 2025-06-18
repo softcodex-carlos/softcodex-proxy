@@ -24,7 +24,7 @@ class MailController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            $this->logError('Malformed JSON: ' . $e->getMessage(), $request);
+            $this->logError('Malformed JSON: ' . $e->getMessage(), $request, 400, null, null, 0, true);
             return $this->jsonResponse([
                 'status' => 'error',
                 'message' => 'Malformed JSON: ' . $e->getMessage()
@@ -34,7 +34,7 @@ class MailController extends AbstractController
         $required = ['subject', 'html', 'from', 'to', 'accessToken'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                $this->logError("Required field is missing: $field", $request);
+                $this->logError("Required field is missing: $field", $request, 400, null, null, 0, true);
                 return $this->jsonResponse([
                     'status' => 'error',
                     'message' => "Required field is missing: $field"
@@ -77,34 +77,19 @@ class MailController extends AbstractController
         $end = microtime(true);
 
         $durationMs = ($end - $start) * 1000;
+
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            $this->logRequest(
-                'Mail sent successfully.',
-                $request,
-                $httpCode,
-                null,
-                $response,
-                $durationMs
-            );
-
+            $this->logError('Mail sent successfully.', $request, $httpCode, null, $response, $durationMs, false);
             return $this->jsonResponse([
                 'status' => 'success',
                 'message' => 'Mail sent successfully.'
             ]);
         } else {
-            $this->logRequest(
-                'Error sending email: ' . ($error ?: 'Unknown error'),
-                $request,
-                $httpCode,
-                $error,
-                $response,
-                $durationMs
-            );
-
+            $this->logError('Error sending email', $request, $httpCode, $error, $response, $durationMs, true);
             return $this->jsonResponse([
                 'status' => 'error',
                 'message' => 'Error sending email',
@@ -115,7 +100,7 @@ class MailController extends AbstractController
         }
     }
 
-    private function logRequest(string $message, Request $request, ?int $httpCode = null, ?string $error = null, ?string $response = null, float $responseTimeMs = 0): void
+    private function logError(string $message, Request $request, int $httpCode = null, string $error = null, string $response = null, float $responseTimeMs = 0, bool $isError = true)
     {
         $log = new ProxyLogs();
         $log->setTimestamp(new \DateTime());
@@ -126,8 +111,14 @@ class MailController extends AbstractController
         $log->setResponseTime($responseTimeMs);
         $log->setResponseSize(mb_strlen($response ?? '', '8bit'));
         $log->setUserAgent($request->headers->get('User-Agent'));
-        $log->setReferer($request->headers->get('Referer') ?? 'No referer');
-        $log->setErrorMessage($message);
+
+        if ($isError) {
+            $log->setErrorMessage($message);
+            $log->setReferer($request->headers->get('Referer'));
+        } else {
+            $log->setErrorMessage(null);
+            $log->setReferer(null);
+        }
 
         $this->entityManager->persist($log);
         $this->entityManager->flush();
