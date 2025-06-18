@@ -1,15 +1,8 @@
-parameters:
-    # parameters if have
-
 services:
     _defaults:
         autowire: true
         autoconfigure: true
         public: false
-
-    App\:
-        resource: '../src/'
-        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
     SoftcodexProxy\:
         resource: '../src/'
