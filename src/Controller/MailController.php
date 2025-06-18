@@ -59,7 +59,6 @@ class MailController
             "saveToSentItems" => "true"
         ];
 
-        // Call Microsoft Graph API (simulated)
         $url = "https://graph.microsoft.com/v1.0/me/sendMail";
         $ch = curl_init($url);
         curl_setopt_array($ch, [
