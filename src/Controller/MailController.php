@@ -42,6 +42,8 @@ class MailController extends AbstractController
             }
         }
 
+        $origin = $data['origin'] ?? null;
+
         $emailPayload = [
             "message" => [
                 "subject" => $data['subject'],
@@ -83,13 +85,13 @@ class MailController extends AbstractController
         curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            $this->logError('Mail sent successfully.', $request, $httpCode, null, $response, $durationMs, false);
+            $this->logError('Mail sent successfully.', $request, $httpCode, null, $response, $durationMs, false, $origin);
             return $this->jsonResponse([
                 'status' => 'success',
                 'message' => 'Mail sent successfully.'
             ]);
         } else {
-            $this->logError('Error sending email', $request, $httpCode, $error, $response, $durationMs, true);
+            $this->logError('Error sending email', $request, $httpCode, $error, $response, $durationMs, true, $origin);
             return $this->jsonResponse([
                 'status' => 'error',
                 'message' => 'Error sending email',
@@ -100,7 +102,7 @@ class MailController extends AbstractController
         }
     }
 
-    private function logError(string $message, Request $request, int $httpCode = null, string $error = null, string $response = null, float $responseTimeMs = 0, bool $isError = true)
+    private function logError(string $message, Request $request, int $httpCode = null, string $error = null, string $response = null, float $responseTimeMs = 0, bool $isError = true, ?string $origin = null)
     {
         $log = new ProxyLogs();
         $log->setTimestamp(new \DateTime());
@@ -114,10 +116,10 @@ class MailController extends AbstractController
 
         if ($isError) {
             $log->setErrorMessage($message);
-            $log->setReferer($request->headers->get('Referer'));
+            $log->setReferer($origin);
         } else {
             $log->setErrorMessage(null);
-            $log->setReferer(null);
+            $log->setReferer($origin);
         }
 
         $this->entityManager->persist($log);
