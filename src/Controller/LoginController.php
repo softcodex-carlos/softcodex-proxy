@@ -40,28 +40,28 @@ class LoginController extends AbstractController
         if (!$tenantId || !$origin || !$authUrl) {
             $errorMessage = 'Missing parameters';
             $statusCode = 400;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
         if (!$clientId || !$clientSecret) {
             $errorMessage = 'Invalid configuration in proxy';
             $statusCode = 500;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
         if (!filter_var($origin, FILTER_VALIDATE_URL)) {
             $errorMessage = 'Invalid origin URL';
             $statusCode = 400;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
         if (!filter_var($authUrl, FILTER_VALIDATE_URL) || !str_starts_with($authUrl, 'https://login.microsoftonline.com/')) {
             $errorMessage = 'Invalid authorization URL';
             $statusCode = 400;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
@@ -84,7 +84,7 @@ class LoginController extends AbstractController
         $end = microtime(true);
         $durationMs = ($end - $start) * 1000;
 
-        $this->logRequest($request, 302, $durationMs, strlen($finalAuthUrl), null, null);
+        $this->logRequest($request, 302, $durationMs, strlen($finalAuthUrl), null, $origin);
 
         return new RedirectResponse($finalAuthUrl);
     }
@@ -107,14 +107,14 @@ class LoginController extends AbstractController
         if ($error) {
             $errorMessage = 'OIDC error: ' . $error;
             $statusCode = 400;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
         if (!$state || !$code || !$origin || !$clientConfig || $state !== $storedState) {
             $errorMessage = 'Invalid or missing session data/state';
             $statusCode = 400;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
 
@@ -138,7 +138,7 @@ class LoginController extends AbstractController
             if (!$email) {
                 $errorMessage = 'Missing email in user data';
                 $statusCode = 400;
-                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
                 return new Response($errorMessage, $statusCode);
             }
 
@@ -147,7 +147,7 @@ class LoginController extends AbstractController
             if (!empty($excludedDomains) && in_array($emailDomain, $excludedDomains)) {
                 $errorMessage = 'Email domain not allowed';
                 $statusCode = 403;
-                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
                 return new Response($errorMessage, $statusCode);
             }
 
@@ -155,7 +155,7 @@ class LoginController extends AbstractController
             if (!empty($allowedDomains) && !in_array($emailDomain, $allowedDomains)) {
                 $errorMessage = 'Email domain not allowed';
                 $statusCode = 403;
-                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+                $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
                 return new Response($errorMessage, $statusCode);
             }
 
@@ -173,13 +173,13 @@ class LoginController extends AbstractController
             $end = microtime(true);
             $durationMs = ($end - $start) * 1000;
 
-            $this->logRequest($request, 302, $durationMs, strlen($query), null, null);
+            $this->logRequest($request, 302, $durationMs, strlen($query), null, $origin);
 
             return new RedirectResponse($origin . '?' . $query);
         } catch (\Throwable $e) {
             $errorMessage = 'OIDC Error: ' . $e->getMessage();
             $statusCode = 500;
-            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, null);
+            $this->logRequest($request, $statusCode, 0, strlen($errorMessage), $errorMessage, $origin);
             return new Response($errorMessage, $statusCode);
         }
     }
