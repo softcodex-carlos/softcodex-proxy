@@ -1,4 +1,3 @@
-# see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
     session: true
@@ -10,6 +9,8 @@ framework:
         - 'X-Forwarded-Host'
         - 'X-Forwarded-Port'
         - 'X-Forwarded-For'
+
+    default_timezone: 'Europe/Madrid'
 
 when@test:
     framework:
